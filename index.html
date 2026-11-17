@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>360高さナビ</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b6bcb">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="360高さナビ">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--tx:#1c2430;--sub:#5b6676;--bd:#d3d9e2;--ac:#0b6bcb;--acx:#fff;--ok:#157347;--wn:#b45309;--dn:#b42318;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151c;--card:#1a212b;--tx:#e8edf4;--sub:#9aa6b6;--bd:#2f3a49;--ac:#4c9aff;--acx:#06121f;--ok:#4ade80;--wn:#fbbf24;--dn:#f87171;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10151c;--card:#1a212b;--tx:#e8edf4;--sub:#9aa6b6;--bd:#2f3a49;--ac:#4c9aff;--acx:#06121f;--ok:#4ade80;--wn:#fbbf24;--dn:#f87171;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 -apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:560px;margin:0 auto;padding:12px}
+h1{font-size:20px;margin:6px 0 2px}.lead{color:var(--sub);font-size:13px;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px;overflow:hidden}
+.card h2{font-size:15px;margin:0 0 10px}
+label{display:block;font-size:13px;color:var(--sub);margin:10px 0 4px}
+select,input,textarea{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;min-height:44px;padding:9px 10px;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:10px}
+textarea{min-height:72px;resize:vertical}
+button{min-height:44px;padding:0 14px;font:inherit;font-weight:600;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);cursor:pointer}
+button.pri{background:var(--ac);color:var(--acx);border-color:var(--ac);width:100%;margin-top:14px}
+button.dg{color:var(--dn)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.row button{flex:1 1 30%;min-width:0}
+.big{font-size:56px;font-weight:800;line-height:1.1;text-align:center;color:var(--ac)}.big small{font-size:20px}
+.rng,.dist{text-align:center;color:var(--sub);margin:4px 0}
+.warn{color:var(--wn);font-size:14px;margin:6px 0}
+pre{white-space:pre-wrap;word-break:break-all;overflow-wrap:anywhere;background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:10px;font:13px/1.6 ui-monospace,monospace;margin:10px 0 0;max-width:100%}
+ul.ck{list-style:none;padding:0;margin:8px 0 0}ul.ck li{padding:6px 0;border-top:1px solid var(--bd)}
+ul.ck label{display:flex;gap:10px;align-items:flex-start;margin:0;color:var(--tx);font-size:15px}
+ul.ck input{width:22px;min-width:22px;min-height:22px;height:22px;margin-top:3px}
+.h{padding:10px 0;border-top:1px solid var(--bd)}.h .t{font-size:12px;color:var(--sub)}.h .s{font-weight:700}
+.h button{min-height:44px;margin-top:6px;margin-right:6px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}.toast.on{opacity:1}
+.cf{margin-top:12px;padding:12px;border:2px solid var(--dn);border-radius:12px}.cf p{margin:0;font-weight:700}
+</style></head><body><main>
+<h1>360高さナビ</h1>
+<p class="lead">撮影前に推奨カメラ高さを決める現場用ツール。高さは撮影後に直せません。</p>
+
+<div class="card"><h2>撮影条件</h2>
+<label for="purpose">目的</label><select id="purpose"></select>
+<label for="layout">並び方</label><select id="layout"></select>
+<label for="count">人数</label><select id="count"></select>
+<label for="comp">構成</label><select id="comp"></select>
+<label for="place">場所</label><select id="place"><option>室内</option><option>屋外</option></select>
+<div id="ceilBox"><label for="ceil">天井高さ(cm・任意)</label><input id="ceil" type="number" inputmode="numeric" min="100" max="2000" placeholder="例: 280"></div>
+<label for="memo">現場メモ</label><textarea id="memo" placeholder="例: 入口側が逆光、床に段差あり"></textarea>
+<button class="pri" id="go">推奨高さを出す</button>
+</div>
+
+<div class="card" id="resCard" hidden><h2>結果</h2>
+<div class="big"><span id="rH">-</span><small> cm</small></div>
+<div class="rng" id="rR"></div><div class="dist" id="rD"></div><div id="rW"></div>
+<p id="rWhy" style="margin:10px 0 0"></p>
+<ul class="ck" id="ck"></ul>
+<pre id="rT"></pre>
+<div class="row"><button id="cp">コピー</button><button id="dl">.txt保存</button></div>
+</div>
+
+<div class="card"><h2>履歴(新しい順)</h2><div id="hist"></div>
+<div class="row"><button class="dg" id="clrH">履歴を消去</button><button class="dg" id="rst">全リセット</button></div><div id="cf"></div></div>
+</main><div class="toast" id="toast"></div>
+<script>
+/* ===== 計算表(ここを書き換えれば計算が変わります) ===== */
+const TABLE={
+  purposes:["顔重視","全体・会場重視","リトルプラネット","空間記録"],
+  baseByLayout:{"円形":130,"半円・1列":145,"2列":165,"3列":185,"着席のみ":120,"自由":175}, // 並び方ごとの基本高さ(cm)
+  purposeOverride:{"空間記録":140,"リトルプラネット":110},   // 目的による基本高さの置換
+  adjCount:{"〜5":-10,"6〜10":0,"11〜25":0,"26〜50":10,"51〜":20},  // 人数補正(cm)
+  countMedian:{"〜5":5,"6〜10":8,"11〜25":18,"26〜50":38,"51〜":60}, // 人数帯の中央値(円形の半径計算用)
+  adjComp:{"大人のみ":0,"子ども中心":-15,"大人＋子ども混在":-10},   // 構成補正(cm)
+  adjPurpose:{"顔重視":0,"全体・会場重視":20,"リトルプラネット":0,"空間記録":0}, // 目的補正(cm)
+  min:90,max:230,        // 丸め範囲(cm)
+  ceilingMargin:70,      // 天井高さ − この値 を上限とする(cm)
+  rangeHalf:10,          // 範囲 = 中心値 ± この値(cm)
+  circleMinR:1.5,        // 円形の最小半径(m)
+  circleK:0.55,circleDiv:6.28, // 半径 = 中央値×K÷DIV
+  otherDist:"最前列まで 1.8〜2.5 m"
+};
+const CHECKS=["スティッチライン(つなぎ目)に人が重ならない向きに設置した","最前列がカメラから1.5m以上離れている","本番前に試し撮りして、顔の大きさと歪みを確認した","通常の集合写真(通常カメラ)も併せて撮る","高さは全カットで統一する(撮影後は変更不可)"];
+const KEY="h360navi.history.v1",KEYI="h360navi.inputs.v1",MAXH=50;
+/* ===== 以下ロジック ===== */
+const $=id=>document.getElementById(id);
+const F={purpose:TABLE.purposes,layout:Object.keys(TABLE.baseByLayout),count:Object.keys(TABLE.adjCount),comp:Object.keys(TABLE.adjComp)};
+for(const k in F)$(k).innerHTML=F[k].map(v=>`<option>${v}</option>`).join("");
+const sg=n=>(n>0?"+":"")+n;
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("on"),1800)}
+const mem={};
+function load(k,d){if(k in mem)return mem[k];try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function save(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+function inputs(){return{purpose:$("purpose").value,layout:$("layout").value,count:$("count").value,comp:$("comp").value,place:$("place").value,ceil:$("ceil").value.trim(),memo:$("memo").value.trim()}}
+function setInputs(i){for(const k in i)if($(k))$(k).value=i[k];$("ceilBox").hidden=$("place").value!=="室内"}
+function calc(i){
+  const T=TABLE,steps=[];let base=T.baseByLayout[i.layout];
+  if(T.purposeOverride[i.purpose]!=null){base=T.purposeOverride[i.purpose];steps.push(`基本高さ: 目的「${i.purpose}」のため一律 ${base}cm`)}
+  else steps.push(`基本高さ: 並び方「${i.layout}」= ${base}cm`);
+  let h=base;
+  [["人数",i.count,T.adjCount[i.count]],["構成",i.comp,T.adjComp[i.comp]],["目的",i.purpose,T.adjPurpose[i.purpose]]].forEach(([n,v,a])=>{if(a){h+=a;steps.push(`${n}補正「${v}」${sg(a)}cm`)}});
+  const raw=h;h=Math.min(T.max,Math.max(T.min,h));
+  if(h!==raw)steps.push(`丸め: ${raw}cm → ${h}cm(${T.min}〜${T.max}cm)`);
+  let warn="";const c=parseFloat(i.ceil);
+  if(i.place==="室内"&&c>0){const cap=Math.round(c-T.ceilingMargin);
+    if(h>cap){steps.push(`天井制限: 天井${c}cm − ${T.ceilingMargin}cm = ${cap}cm を上限に変更`);h=cap}
+    if(h<T.min)warn=`天井が低く、推奨高さが${T.min}cm未満になりました。機材が天井に近すぎないか現場で確認してください。`}
+  let dist;
+  if(i.layout==="円形"){const r=Math.max(T.circleMinR,T.countMedian[i.count]*T.circleK/T.circleDiv);dist=`円の半径 約${r.toFixed(1)} m(中央にカメラ)`}
+  else dist=T.otherDist;
+  return{h,lo:h-T.rangeHalf,hi:h+T.rangeHalf,dist,steps,warn}
+}
+function why(i,r){
+  const p={"顔重視":"顔の大きさと表情を優先する撮り方です。","全体・会場重視":"会場の広がりも写すため、やや高めにしています。","リトルプラネット":"真下に向けた丸い構図向けに低めの固定値としています。","空間記録":"空間全体を均等に記録する目的の固定値としています。"}[i.purpose];
+  return `${p}${r.steps.join("、")}。結果は${r.h}cm(範囲 ${r.lo}〜${r.hi}cm)です。`}
+function fmt(i,r,ts){
+  const d=new Date(ts),z=n=>String(n).padStart(2,"0");
+  const when=`${d.getFullYear()}/${z(d.getMonth()+1)}/${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`;
+  return [`【360高さナビ】${when}`,`目的: ${i.purpose} / 並び方: ${i.layout} / 人数: ${i.count} / 構成: ${i.comp}`,`場所: ${i.place}${i.place==="室内"&&i.ceil?`(天井${i.ceil}cm)`:""}`,"",`推奨高さ: ${r.h} cm`,`範囲: ${r.lo}〜${r.hi} cm`,`推奨距離: ${r.dist}`,"",`理由: ${why(i,r)}`,r.warn?`注意: ${r.warn}`:"","","チェックリスト:",...CHECKS.map(c=>"□ "+c),i.memo?`\n現場メモ: ${i.memo}`:""].filter((x,n,a)=>!(x===""&&a[n-1]==="")).join("\n")}
+function show(i,r,text){
+  $("resCard").hidden=false;$("rH").textContent=r.h;$("rR").textContent=`範囲 ${r.lo}〜${r.hi} cm`;$("rD").textContent=`推奨距離: ${r.dist}`;
+  $("rW").innerHTML=r.warn?`<div class="warn">⚠ ${r.warn}</div>`:"";$("rWhy").textContent=why(i,r);
+  $("ck").innerHTML=CHECKS.map((c,n)=>`<li><label><input type="checkbox" id="c${n}"><span>${c}</span></label></li>`).join("");
+  $("rT").textContent=text}
+function renderHist(){
+  const hs=load(KEY,[]);
+  $("hist").innerHTML=hs.length?hs.map((h,n)=>`<div class="h"><div class="t">${new Date(h.ts).toLocaleString("ja-JP")}</div><div class="s">${h.r.h} cm ／ ${h.i.purpose}・${h.i.layout}・${h.i.count}</div><button data-v="${n}">表示</button><button data-d="${n}" class="dg">削除</button></div>`).join(""):'<div class="lead">まだ履歴はありません。</div>'}
+$("hist").addEventListener("click",e=>{
+  const hs=load(KEY,[]),v=e.target.dataset.v,d=e.target.dataset.d;
+  if(v!=null){const h=hs[v];if(!h)return;setInputs(h.i);show(h.i,h.r,h.text);$("resCard").scrollIntoView({behavior:"smooth"})}
+  if(d!=null){hs.splice(d,1);save(KEY,hs);renderHist()}});
+$("go").onclick=()=>{
+  const i=inputs(),r=calc(i),ts=Date.now(),text=fmt(i,r,ts);
+  show(i,r,text);save(KEYI,i);
+  const hs=load(KEY,[]);hs.unshift({ts,i,r,text});hs.length=Math.min(hs.length,MAXH);
+  if(!save(KEY,hs))toast("履歴を保存できませんでした");renderHist();$("resCard").scrollIntoView({behavior:"smooth"})};
+$("place").onchange=()=>{$("ceilBox").hidden=$("place").value!=="室内"};
+$("cp").onclick=async()=>{const t=$("rT").textContent;
+  try{await navigator.clipboard.writeText(t);toast("コピーしました")}
+  catch(e){const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();try{document.execCommand("copy");toast("コピーしました")}catch(x){toast("コピーできませんでした")}a.remove()}};
+$("dl").onclick=()=>{try{const b=new Blob([$("rT").textContent],{type:"text/plain;charset=utf-8"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="360height-"+Date.now()+".txt";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);toast("保存しました")}catch(e){toast("保存できませんでした。コピーをお使いください")}};
+function ask(msg,ok){const b=$("cf");b.innerHTML=`<div class="cf"><p>${msg}</p><div class="row"><button class="dg" id="cfY">消去する</button><button id="cfN">キャンセル</button></div></div>`;$("cfN").onclick=()=>{b.innerHTML=""};$("cfY").onclick=()=>{b.innerHTML="";ok()};b.scrollIntoView({block:"nearest"})}
+$("clrH").onclick=()=>ask("本当に履歴を全て消しますか？",()=>{save(KEY,[]);renderHist();toast("履歴を消去しました")});
+$("rst").onclick=()=>ask("本当に全て消しますか？(入力・結果・履歴。元に戻せません)",()=>{try{localStorage.removeItem(KEY);localStorage.removeItem(KEYI)}catch(e){}mem[KEY]=[];mem[KEYI]={};
+  for(const k in F)$(k).selectedIndex=0;$("place").selectedIndex=0;$("ceil").value="";$("memo").value="";$("ceilBox").hidden=false;$("resCard").hidden=true;renderHist();toast("リセットしました")});
+setInputs(load(KEYI,{}));renderHist();
+</script><script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  });
+}
+</script>
+</body></html>
